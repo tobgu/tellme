@@ -19,7 +19,10 @@
                  [compojure "1.3.1"]
                  [selmer "0.8.0"]
                  [environ "1.0.0"]
-                 [cljs-ajax "0.3.10"]]
+                 [cljs-ajax "0.3.10"]
+                 [buddy/buddy-auth "0.4.0"]
+                 [cheshire "5.2.0"]
+                 [ring-transit "0.1.3"]]
 
   :plugins [
             [lein-cljsbuild "1.0.4"]
