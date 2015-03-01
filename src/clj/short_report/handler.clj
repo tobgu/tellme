@@ -4,6 +4,7 @@
             [ring.middleware.defaults :refer [site-defaults wrap-defaults]]
             [ring.middleware.reload :refer [wrap-reload]]
             [ring.middleware.anti-forgery :refer :all]
+            [ring.middleware.session.cookie :refer [cookie-store]]
             [selmer.parser :refer [render-file]]
             [prone.middleware :refer [wrap-exceptions]]
             [buddy.auth :refer [authenticated? throw-unauthorized]]
@@ -36,13 +37,17 @@
       {:status 401 :body {:user user :pass pass}})))
 
 
+(defn logout
+  [request]
+  (let [session (:session request)]
+    {:status 200 :session (dissoc session :identity)}))
+
 
 (defroutes routes
-  (GET "/csrf" [] (generate-string {:csrf-token *anti-forgery-token*}))
-  (GET "/" [] (render-file "templates/index.html" {:dev (env :dev?)}))
+  (GET "/" [] (render-file "templates/index.html" {:dev (env :dev?) :csrf-token *anti-forgery-token*}))
   (GET "/api/text" [] "Text from the API")
   (POST "/login" [] login-authenticate)
-  (GET "/login" [] "Baah!") ; login-authenticate
+  (POST "/logout" [] logout)
   (resources "/")
   (not-found "Not Found"))
 
@@ -76,6 +81,6 @@
   (let [handler (-> routes
                     (wrap-transit-response {:encoding :json :opts {}})
                     (wrap-authentication auth-backend)
-                    (wrap-defaults site-defaults)
+                    (wrap-defaults (assoc-in site-defaults [:session :store] (cookie-store {:key "abcdefghijklmnop"})))   ; TODO: Change key and move out of repo
                     (wrap-transit-params {:keywords? true :opts {}}))]
     (if (env :dev?) (wrap-reload(wrap-exceptions handler) handler))))

@@ -1,6 +1,7 @@
 (ns short-report.core
     (:require [reagent.core :as reagent :refer [atom]]
               [reagent.session :as session]
+              [reagent.cookies :as cookies]
               [secretary.core :as secretary :include-macros true]
               [goog.events :as events]
               [ajax.core :as ajx]
@@ -15,32 +16,30 @@
 (defn auth-hash [user pass]
   (->> (str user ":" pass) (b64/encodeString) (str "Basic ")))
 
-; TODO: Should this be handled by server side rendering instead?
-(defn with-csrf-token [function & params]
-  (if (session/get :csrf-token)
-    (apply function params)
-    (ajx/GET "/csrf" {
-                     :response-format :json
-                     :keywords? true
-                     :handler #(do
-                                 (.warn js/console (str "CSRF response " %))
-                                 (session/put! :csrf-token (:csrf-token %))
-                                 (apply function params))})))
-
 (defn login! [user pass error]
   (do
-    (.warn js/console (str "." user "-" pass "About to fetch text"))
+    (.warn js/console (str "About to login"))
     (cond
       (empty? user) (reset! error "User name required")
       (empty? pass) (reset! error "Password required")
       :else (ajx/POST "/login" {:params {:user user :pass pass}
-                                :headers {"X-CSRF-Token" (session/get :csrf-token)}
+                                :headers {"X-CSRF-Token" js/csrfToken}
                                 :handler #(do
-                                            (session/remove! :login)
-                                            (session/put! :logged-in true)
-                                            (session/put! :roles (:roles %))
-                                            (session/put! :user user))
-                                :error-handler #(.warn js/console (str "Response " %))}))))
+                                            (cookies/set! :tellme-roles (:roles %))
+                                            (cookies/set! :tellme-user user)
+                                            (session/put! :tellme-user user))
+                                ; TODO: something better
+                                :error-handler #(.warn js/console (str "Login error, response: " %))}))))
+
+(defn logout! [error]
+  (if (cookies/get :tellme-user)
+    (ajx/POST "/logout" {:headers {"X-CSRF-Token" js/csrfToken}
+                         :handler #(do
+                                    (cookies/remove! :tellme-user)
+                                    (session/remove! :tellme-user user)
+                                    (cookies/remove! :tellme-roles))
+                         ; TODO: something better
+                         :error-handler #(.warn js/console (str "Logout error, response: " %))})))
 
 ;; -------------------------
 ;; Views
@@ -73,17 +72,16 @@
         pass (atom nil)
         error (atom nil)]
       (fn []
+        (if-let [user (session/get :tellme-user)]
+          [:div.login-form
+           [:span (str "Logged in as " user)]
+           [:span.button.login-button.out {:on-click #(logout! error)} "Logout"]]
           [:div.login-form
             [:input {:on-change (set-value! user) :value @user :type "text" :placeholder "User name"}]
             [:input {:on-change (set-value! pass) :value @pass :type "password" :placeholder "Password"}]
-            [:span.button.login-button {:on-click #(session/remove! :login)} "Cancel"]
-            [:span.button.login-button {:on-click #(with-csrf-token login! @user @pass error)} "Login"]
-            [:div
-             (if-let [user (session/get :user)]
-               (str "Logged in as " user)
-               "Not logged in")]
-          (if-let [error @error]
-            [:div.error error])])))
+            [:span.button.login-button {:on-click #(login! @user @pass error)} "Login"]
+            (if-let [error @error]
+              [:div.error error])]))))
 
 
 (defn current-page []
@@ -146,4 +144,5 @@
 ;; Initialize app
 (defn init! []
   (hook-browser-navigation!)
+  (session/put! :tellme-user (cookies/get :tellme-user))   ; The mix of sessions and cookies here feels hackish...
   (reagent/render-component [current-page] (.getElementById js/document "app")))
