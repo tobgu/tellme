@@ -7,12 +7,12 @@
             [ring.middleware.session.cookie :refer [cookie-store]]
             [selmer.parser :refer [render-file]]
             [prone.middleware :refer [wrap-exceptions]]
-            [buddy.auth :refer [authenticated? throw-unauthorized]]
-            [buddy.auth.backends.session :refer [session-backend]]
-            [buddy.auth.middleware :refer [wrap-authentication wrap-authorization]]
             [environ.core :refer [env]]
             [ring.middleware.transit :refer [wrap-transit-response wrap-transit-params]]
-            [cheshire.core :refer :all]))
+            [cheshire.core :refer :all]
+            [buddy.auth.backends.token :refer [token-backend]]
+            [buddy.auth.middleware :refer [wrap-authentication wrap-authorization]]
+            [buddy.auth :refer [authenticated? throw-unauthorized]]))
 
 
 (def authdata {:a "1"
@@ -32,15 +32,34 @@
       (if (= found-password pass)
         (let [nexturl (get-in request [:query-params :next] "/")
               session (assoc session :identity (keyword user))]
-          {:status 201 :session session :body {:roles (get roles (keyword user))}})
+          {:status 201 :session session :body {:roles (get roles (keyword user)) :token :2f904e245c1f5}})
         {:status 401 :body {:user user :pass pass}})
       {:status 401 :body {:user user :pass pass}})))
 
 
+;; Define a in-memory relation between tokens and users:
+(def tokens {:2f904e245c1f5 :a
+             :45c1f5e3f05d0 :b})
+
+;; Define a authfn, function with the responsibility
+;; to authenticate the incoming token and return an
+;; identity instance
+
+(defn my-authfn
+  [request token]
+  (let [token (keyword token)]
+    (get tokens token nil)))
+
+;; Create a instance
+(def backend (token-backend {:authfn my-authfn}))
+
+
 (defn logout
   [request]
-  (let [session (:session request)]
-    {:status 200 :session (dissoc session :identity)}))
+  (if (authenticated? request)
+    (let [session (:session request)]
+      {:status 200 :session (dissoc session :identity)})
+    (throw-unauthorized)))
 
 
 (defroutes routes
@@ -61,26 +80,14 @@
 ; - Check roles when accessing different URLs. Both front end for how to render and backend for what is actually
 ;   OK to access for a user belonging to a specific organization and with a specific set of roles.
 
-(defn unauthenticated-handler
-  [request metadata]
-  (do
-    (.println System/out "!!!! Fooo !!!!")
-    (cond
-      (authenticated? request) (println "!!! Authenticated !!!")
-      :else {:status 401})))
-
-
-;; Create an instance of auth backend.
-
-(def auth-backend
-  (session-backend {:unauthorized-handler unauthenticated-handler}))
-
-
 
 (def app
   (let [handler (-> routes
                     (wrap-transit-response {:encoding :json :opts {}})
-                    (wrap-authentication auth-backend)
-                    (wrap-defaults (assoc-in site-defaults [:session :store] (cookie-store {:key "abcdefghijklmnop"})))   ; TODO: Change key and move out of repo
-                    (wrap-transit-params {:keywords? true :opts {}}))]
+                    (wrap-defaults (-> site-defaults
+                                       (assoc-in [:session :store] (cookie-store {:key "abcdefghijklmnop"}))
+                                       (assoc-in [:security :anti-forgery] false)))   ; TODO: Change key and move out of repo
+                    (wrap-transit-params {:keywords? true :opts {}})
+                    (wrap-authentication backend)
+                    (wrap-authorization backend))]
     (if (env :dev?) (wrap-reload(wrap-exceptions handler) handler))))

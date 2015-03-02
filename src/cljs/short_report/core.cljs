@@ -23,23 +23,26 @@
       (empty? user) (reset! error "User name required")
       (empty? pass) (reset! error "Password required")
       :else (ajx/POST "/login" {:params {:user user :pass pass}
-                                :headers {"X-CSRF-Token" js/csrfToken}
                                 :handler #(do
+                                            (.warn js/console (str "Logged in " (:tellme-token %)))
                                             (cookies/set! :tellme-roles (:roles %))
                                             (cookies/set! :tellme-user user)
+                                            (cookies/set! :tellme-token (name (:token %)))
                                             (session/put! :tellme-user user))
                                 ; TODO: something better
                                 :error-handler #(.warn js/console (str "Login error, response: " %))}))))
 
 (defn logout! [error]
   (if (cookies/get :tellme-user)
-    (ajx/POST "/logout" {:headers {"X-CSRF-Token" js/csrfToken}
+    (ajx/POST "/logout" {:headers {"Authorization" (str "Token " (cookies/get :tellme-token))}
                          :handler #(do
                                     (cookies/remove! :tellme-user)
                                     (session/remove! :tellme-user user)
+                                    (cookies/remove! :tellme-token)
                                     (cookies/remove! :tellme-roles))
                          ; TODO: something better
-                         :error-handler #(.warn js/console (str "Logout error, response: " %))})))
+                         :error-handler #(.warn js/console (str "Logout error, response: " %))})
+    (.warn js/console (str "Not logged in?"))))
 
 ;; -------------------------
 ;; Views
