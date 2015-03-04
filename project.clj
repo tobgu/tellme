@@ -22,7 +22,11 @@
                  [cljs-ajax "0.3.10"]
                  [buddy/buddy-auth "0.4.0"]
                  [cheshire "5.2.0"]
-                 [ring-transit "0.1.3"]]
+                 [ring-transit "0.1.3"]
+                 [postgresql/postgresql "8.4-702.jdbc4"]
+                 [yesql "0.4.0"]
+                 [org.clojure/java.jdbc "0.3.3"]
+                 [org.flywaydb/flyway-core "3.0"]]
 
   :plugins [
             [lein-cljsbuild "1.0.4"]
@@ -37,6 +41,8 @@
   :min-lein-version "2.5.0"
 
   :uberjar-name "short-report.jar"
+
+  :aliases {"migrate" ["run" "-m" "short_report.migrations/migrate"]}
 
   :main short-report.server
 
