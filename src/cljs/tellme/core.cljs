@@ -70,15 +70,26 @@
 
 :on-change #(reset! cursor (-> % .-target .-value))
 
+(defn sidebar []
+  [:div#sidebar-wrapper
+   [:ul.sidebar-nav
+    [:li.sidebar-brand [:a {:href "#"} "Simple Sidebar"]]
+    [:li [:a {:href "#"} "Page 1"]]
+    [:li [:a {:href "#"} "Page 2"]]
+    [:li [:a {:href "#"} "Page 3"]]
+    ]])
+
 (defn login-page []
   (let [user (atom nil)
         pass (atom nil)
         error (atom nil)]
       (fn []
         (if-let [user (session/get :tellme-user)]
-          [:div.login-form
-           [:span (str "Logged in as " user)]
-           [:span.button.login-button.out {:on-click #(logout! error)} "Logout"]]
+          [:div#wrapper
+           (sidebar)
+           [:div.login-form
+            [:span (str "Logged inn as " user)]
+            [:span.button.login-button.out {:on-click #(logout! error)} "Logout"]]]
           [:div.login-form
             [:input {:on-change (set-value! user) :value @user :type "text" :placeholder "User name"}]
             [:input {:on-change (set-value! pass) :value @pass :type "password" :placeholder "Password"}]

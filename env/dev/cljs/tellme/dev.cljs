@@ -1,5 +1,5 @@
-(ns short-report.dev
-  (:require [short-report.core :as core]
+(ns tellme.dev
+  (:require [tellme.core :as core]
             [figwheel.client :as figwheel :include-macros true]
             [weasel.repl :as weasel]
             [reagent.core :as r]))
