@@ -1,5 +1,5 @@
-(ns short-report.server
-  (:require [short-report.handler :refer [app]]
+(ns tellme.server
+  (:require [tellme.handler :refer [app]]
             [ring.adapter.jetty :refer [run-jetty]])
   (:gen-class))
 

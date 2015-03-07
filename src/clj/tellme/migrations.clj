@@ -1,8 +1,9 @@
-(ns short_report.migrations
+(ns tellme.migrations
   (import [org.flywaydb.core Flyway])
   (require [clojure.java.jdbc :refer [db-do-commands]]))
 
 
+; TODO: Move connection information away from here
 (defn get-db-datasource []
   (doto (org.postgresql.ds.PGSimpleDataSource.)
         (.setServerName "localhost")

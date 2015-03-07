@@ -1,4 +1,4 @@
-(ns short-report.handler
+(ns tellme.handler
   (:require [compojure.core :refer [GET POST defroutes]]
             [compojure.route :refer [not-found resources]]
             [ring.middleware.defaults :refer [site-defaults wrap-defaults]]
@@ -46,6 +46,7 @@
 
 ; "Functions" use kebab case and "data" use snake case for SQL compatibility etc?
 
+; TODO: Move connection info away from here
 (def db-connection
   {:user "tellme"
    :password "letmein"
@@ -74,13 +75,13 @@
     )))
 
 
-(create-account {:params {:org_long_name "foo bar"
-                          :org_short_name "foo"
-                          :user_name "the_user"
-                          :password "the_pass"
-                          :email "a@b.com"
-                          :first_name "Tobias"
-                          :last_name "G"}})
+;; (create-account {:params {:org_long_name "foo bar"
+;;                           :org_short_name "foo"
+;;                           :user_name "the_user"
+;;                           :password "the_pass"
+;;                           :email "a@b.com"
+;;                           :first_name "Tobias"
+;;                           :last_name "G"}})
 
 ;; Define a in-memory relation between tokens and users:
 (def tokens {:2f904e245c1f5 :a

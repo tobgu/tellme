@@ -1,4 +1,4 @@
-(defproject short-report "0.1.0-SNAPSHOT"
+(defproject tellme "0.1.0-SNAPSHOT"
   :description "FIXME: write description"
   :url "http://example.com/FIXME"
   :license {:name "Eclipse Public License"
@@ -36,17 +36,17 @@
             [lein-ring "0.9.1"]
             [lein-asset-minifier "0.2.2"]]
 
-  :ring {:handler short-report.handler/app
-         :uberwar-name "short-report.war"
+  :ring {:handler tellme.handler/app
+         :uberwar-name "tellme.war"
          :auto-reload? true}
 
   :min-lein-version "2.5.0"
 
-  :uberjar-name "short-report.jar"
+  :uberjar-name "tellme.jar"
 
   :aliases {"migrate" ["run" "-m" "short_report.migrations/migrate"]}
 
-  :main short-report.server
+  :main tellme.server
 
   :clean-targets ^{:protect false} ["resources/public/js"]
 
@@ -62,7 +62,7 @@
                                         :optimizations :none
                                         :pretty-print  true}}}}
 
-  :profiles {:dev {:repl-options {:init-ns short-report.handler
+  :profiles {:dev {:repl-options {:init-ns tellme.handler
                                   :nrepl-middleware [cemerick.piggieback/wrap-cljs-repl]}
 
                    :dependencies [[ring-mock "0.1.5"]
@@ -82,12 +82,12 @@
                    :figwheel {:http-server-root "public"
                               :server-port 3449
                               :css-dirs ["resources/public/css"]
-                              :ring-handler short-report.handler/app}
+                              :ring-handler tellme.handler/app}
 
                    :env {:dev? true}
 
                    :cljsbuild {:builds {:app {:source-paths ["env/dev/cljs"]
-                                              :compiler {:main "short-report.dev"
+                                              :compiler {:main "tellme.dev"
                                                          :source-map true}}}}}
 
              :uberjar {:hooks [leiningen.cljsbuild minify-assets.plugin/hooks]
@@ -104,5 +104,5 @@
              :production {:ring {:open-browser? false
                                  :stacktraces?  false
                                  :auto-reload?  false}
-                          :cljsbuild {:builds {:app {:compiler {:main "short-report.prod"}}}}
+                          :cljsbuild {:builds {:app {:compiler {:main "tellme.prod"}}}}
                           }})

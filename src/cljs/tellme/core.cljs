@@ -1,4 +1,4 @@
-(ns short-report.core
+(ns tellme.core
     (:require [reagent.core :as reagent :refer [atom]]
               [reagent.session :as session]
               [reagent.cookies :as cookies]
@@ -48,13 +48,13 @@
 ;; Views
 
 (defn home-page []
-  [:div [:h2 "Welcome to short-report!"]
+  [:div [:h2 "Welcome to TellMe!"]
    [:div [:a {:href "#/about"} "go to about page"]]
    [:div (:text state)]
    [:div [:a {:on-click (fn [_] (fetch-text!))} "Fetch some home text"]]])
 
 (defn about-page []
-  [:div [:h2 "About short-report"]
+  [:div [:h2 "About TellMe"]
    [:div [:a {:href "#/"} "go to the home page"]]
    [:div (:text @state)]
    [:div [:a {:on-click (fn [_] (fetch-text!))} "Fetch some about text"]]])
