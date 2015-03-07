@@ -12,7 +12,9 @@
             [cheshire.core :refer :all]
             [buddy.auth.backends.token :refer [token-backend]]
             [buddy.auth.middleware :refer [wrap-authentication wrap-authorization]]
-            [buddy.auth :refer [authenticated? throw-unauthorized]]))
+            [buddy.auth :refer [authenticated? throw-unauthorized]]
+            [buddy.hashers :as hashers]
+            [yesql.core :refer [defqueries]]))
 
 
 (def authdata {:a "1"
@@ -22,6 +24,11 @@
 (def roles {:a [:admin :user],
             :b [:user]})
 
+
+; TODO start using SQL backend
+; TODO Remove session dependency (is is possible to remove the session altogether?)
+; TODO buddy hash
+; TODO Use fairly high iteration count (12, default => 0.5 s) for passwords but a much lower (4? or even lower => 2 ms) for the token.
 
 (defn login-authenticate
   [request]
@@ -36,6 +43,44 @@
         {:status 401 :body {:user user :pass pass}})
       {:status 401 :body {:user user :pass pass}})))
 
+
+; "Functions" use kebab case and "data" use snake case for SQL compatibility etc?
+
+(def db-connection
+  {:user "tellme"
+   :password "letmein"
+   :subname "//localhost:5434/tellme"
+   :subprotocol "postgresql"})
+
+(defqueries "db/queries.sql")
+
+
+(defn create-user [request org_short_name roles]
+  (let [user_name (str org_short_name "_" (get-in request [:params :user_name]))
+        hashed_password (hashers/encrypt (get-in request [:params :password]))
+        email (get-in request [:params :email])
+        first_name (get-in request [:params :first_name])
+        last_name (get-in request [:params :last_name])]
+    (create-user<! db-connection user_name hashed_password email first_name last_name org_short_name)
+  ))
+
+(defn create-account [request]
+  (let [org_short_name (get-in request [:params :org_short_name])
+        org_long_name (get-in request [:params :org_long_name])]
+    (do
+      (create-organization<! db-connection org_short_name org_long_name)
+      (create-user request org_short_name [:admin])
+      {:status 201}
+    )))
+
+
+(create-account {:params {:org_long_name "foo bar"
+                          :org_short_name "foo"
+                          :user_name "the_user"
+                          :password "the_pass"
+                          :email "a@b.com"
+                          :first_name "Tobias"
+                          :last_name "G"}})
 
 ;; Define a in-memory relation between tokens and users:
 (def tokens {:2f904e245c1f5 :a

@@ -21,12 +21,14 @@
                  [environ "1.0.0"]
                  [cljs-ajax "0.3.10"]
                  [buddy/buddy-auth "0.4.0"]
+                 [buddy/buddy-hashers "0.4.0"]
                  [cheshire "5.2.0"]
                  [ring-transit "0.1.3"]
                  [postgresql/postgresql "8.4-702.jdbc4"]
                  [yesql "0.4.0"]
                  [org.clojure/java.jdbc "0.3.3"]
-                 [org.flywaydb/flyway-core "3.0"]]
+                 [org.flywaydb/flyway-core "3.0"]
+                 [criterium "0.4.3"]]
 
   :plugins [
             [lein-cljsbuild "1.0.4"]
