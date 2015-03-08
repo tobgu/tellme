@@ -7,7 +7,8 @@
               [ajax.core :as ajx]
               [goog.history.EventType :as EventType]
               [cljsjs.react :as react]
-              [goog.crypt.base64 :as b64])
+              [goog.crypt.base64 :as b64]
+              [reagent-modals.modals :as reagent-modals])
     (:import goog.History))
 
 (defn https? []
@@ -16,6 +17,7 @@
 (defn auth-hash [user pass]
   (->> (str user ":" pass) (b64/encodeString) (str "Basic ")))
 
+; TODO Stop using cookies to store stuff, use local storage / session storage instead.
 (defn login! [user pass error]
   (do
     (.warn js/console (str "About to login"))
@@ -24,11 +26,11 @@
       (empty? pass) (reset! error "Password required")
       :else (ajx/POST "/login" {:params {:user user :pass pass}
                                 :handler #(do
-                                            (.warn js/console (str "Logged in " (:tellme-token %)))
+                                            (.warn js/console (str "Logged in " (:token %)))
                                             (cookies/set! :tellme-roles (:roles %))
                                             (cookies/set! :tellme-user user)
                                             (cookies/set! :tellme-token (name (:token %)))
-                                            (session/put! :tellme-user user))
+                                            (secretary/dispatch! "/"))
                                 ; TODO: something better
                                 :error-handler #(.warn js/console (str "Login error, response: " %))}))))
 
@@ -37,9 +39,9 @@
     (ajx/POST "/logout" {:headers {"Authorization" (str "Token " (cookies/get :tellme-token))}
                          :handler #(do
                                     (cookies/remove! :tellme-user)
-                                    (session/remove! :tellme-user user)
                                     (cookies/remove! :tellme-token)
-                                    (cookies/remove! :tellme-roles))
+                                    (cookies/remove! :tellme-roles)
+                                    (secretary/dispatch! "/"))
                          ; TODO: something better
                          :error-handler #(.warn js/console (str "Logout error, response: " %))})
     (.warn js/console (str "Not logged in?"))))
@@ -73,30 +75,40 @@
 (defn sidebar []
   [:div#sidebar-wrapper
    [:ul.sidebar-nav
-    [:li.sidebar-brand [:a {:href "#"} "Simple Sidebar"]]
-    [:li [:a {:href "#"} "Page 1"]]
-    [:li [:a {:href "#"} "Page 2"]]
-    [:li [:a {:href "#"} "Page 3"]]
+    [:li.sidebar-brand [:a {:href "#"} (cookies/get :tellme-user)]]
+    [:li [:a {:href "#/report"} "Reports"]]
+    [:li [:a {:href "#/stat"} "Statistics"]]
+    [:li [:a {:href "#/admin"} "Admin"]]
     ]])
+
+(defn logged-in-page []
+  [:div#wrapper
+   (sidebar)
+   [:div.login-form
+    [:span (str "Logged in")]
+    [:span.button.login-button.out {:on-click #(logout! error)} "Logout"]]])
 
 (defn login-page []
   (let [user (atom nil)
         pass (atom nil)
         error (atom nil)]
       (fn []
-        (if-let [user (session/get :tellme-user)]
-          [:div#wrapper
-           (sidebar)
-           [:div.login-form
-            [:span (str "Logged inn as " user)]
-            [:span.button.login-button.out {:on-click #(logout! error)} "Logout"]]]
-          [:div.login-form
+        [:div.login-form
             [:input {:on-change (set-value! user) :value @user :type "text" :placeholder "User name"}]
             [:input {:on-change (set-value! pass) :value @pass :type "password" :placeholder "Password"}]
             [:span.button.login-button {:on-click #(login! @user @pass error)} "Login"]
             (if-let [error @error]
-              [:div.error error])]))))
+              [:div.error error])])))
 
+(defn start-page []
+  [:div.container
+    [reagent-modals/modal-window]
+    [:div.jumbotron
+      [:h1 "Welcome to TellMe"]
+      [:p "Dedicated to simplifying your report workflow!"]
+      [:div.btn.btn-lg.btn-primary {:on-click #(reagent-modals/modal! [:div "You wanna login?"])} "Login"]
+      [:div.btn.btn-lg.btn-default {:on-click #(reagent-modals/modal! [:div "You wanna sign up?"])} "Sign up"]
+   ]])
 
 (defn current-page []
   [:div [(session/get :current-page)]])
@@ -136,9 +148,9 @@
 (secretary/set-config! :prefix "#")
 
 (secretary/defroute "/" []
-  (if (session/get :user)
-    (session/put! :current-page #'home-page)
-    (session/put! :current-page #'login-page)))
+  (if (cookies/get :tellme-user)
+    (session/put! :current-page #'logged-in-page)
+    (session/put! :current-page #'start-page)))
 
 (secretary/defroute "/about" []
   (session/put! :current-page #'about-page))
