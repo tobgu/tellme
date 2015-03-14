@@ -8,7 +8,11 @@
               [goog.history.EventType :as EventType]
               [cljsjs.react :as react]
               [goog.crypt.base64 :as b64]
-              [reagent-modals.modals :as reagent-modals])
+              [reagent-modals.modals :as reagent-modals]
+              [tellme.handlers]
+              [tellme.subs]
+              [tellme.views :as views]
+              [re-frame.core :refer [dispatch dispatch-sync]])
     (:import goog.History))
 
 (defn https? []
@@ -49,18 +53,6 @@
 ;; -------------------------
 ;; Views
 
-(defn home-page []
-  [:div [:h2 "Welcome to TellMe!"]
-   [:div [:a {:href "#/about"} "go to about page"]]
-   [:div (:text state)]
-   [:div [:a {:on-click (fn [_] (fetch-text!))} "Fetch some home text"]]])
-
-(defn about-page []
-  [:div [:h2 "About TellMe"]
-   [:div [:a {:href "#/"} "go to the home page"]]
-   [:div (:text @state)]
-   [:div [:a {:on-click (fn [_] (fetch-text!))} "Fetch some about text"]]])
-
 ;; TODO Need to fix SSL
 
 (defn input-value [input]
@@ -69,8 +61,6 @@
 (defn set-value! [target]
   (fn [source] (reset! target (input-value source))))
 
-
-:on-change #(reset! cursor (-> % .-target .-value))
 
 (defn sidebar []
   [:div#sidebar-wrapper
@@ -100,14 +90,15 @@
             (if-let [error @error]
               [:div.error error])])))
 
+
 (defn start-page []
   [:div.container
     [reagent-modals/modal-window]
     [:div.jumbotron
       [:h1 "Welcome to TellMe"]
       [:p "Dedicated to simplifying your report workflow!"]
-      [:div.btn.btn-lg.btn-primary {:on-click #(reagent-modals/modal! [:div "You wanna login?"])} "Login"]
-      [:div.btn.btn-lg.btn-default {:on-click #(reagent-modals/modal! [:div "You wanna sign up?"])} "Sign up"]
+      [:div.btn.btn-lg.btn-primary {:on-click #(reagent-modals/modal! [views/login-form])} "Login"]
+      [:div.btn.btn-lg.btn-default {:on-click #(dispatch [:login-success])} "Sign up"]
    ]])
 
 (defn current-page []
@@ -117,33 +108,6 @@
   [:div [(session/get :server-message)]])
 
 ;; -------------------------
-;; Ajax
-
-(defn fetch-text! []
-  (do
-    (.warn js/console "About to fetch text")
-    (ajx/GET "/api/text"
-             {:handler (fn [text] (do
-                                    (.warn js/console (str "Received" text))
-                                    (swap! state assoc :text text)))
-              :error-handler (fn [details] (.warn js/console (str "Failed to fetch text" details)))})))
-
-(defn login []
-  (ajx/GET "/api/text"
-       {:handler (fn [data]
-                   (reset! user (into @user data)))
-        :error-handler (fn [response]
-                         (.warn js/console (str "Response " response)))}))
-
-
-;; -------------------------
-;; State
-(def state
-  (reagent/atom {:user []
-                 :text "Some text"}))
-
-
-;; -------------------------
 ;; Routes
 (secretary/set-config! :prefix "#")
 
@@ -151,9 +115,6 @@
   (if (cookies/get :tellme-user)
     (session/put! :current-page #'logged-in-page)
     (session/put! :current-page #'start-page)))
-
-(secretary/defroute "/about" []
-  (session/put! :current-page #'about-page))
 
 ;; -------------------------
 ;; History
@@ -170,5 +131,6 @@
 ;; Initialize app
 (defn init! []
   (hook-browser-navigation!)
+  (dispatch-sync [:initialise-db])
   (session/put! :tellme-user (cookies/get :tellme-user))   ; The mix of sessions and cookies here feels hackish...
   (reagent/render-component [current-page] (.getElementById js/document "app")))

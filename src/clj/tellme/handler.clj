@@ -39,7 +39,7 @@
       (if (= found-password pass)
         (let [nexturl (get-in request [:query-params :next] "/")
               session (assoc session :identity (keyword user))]
-          {:status 201 :session session :body {:roles (get roles (keyword user)) :token :2f904e245c1f5}})
+          {:status 201 :session session :body {:user user :roles (get roles (keyword user)) :token :2f904e245c1f5}})
         {:status 401 :body {:user user :pass pass}})
       {:status 401 :body {:user user :pass pass}})))
 

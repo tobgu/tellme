@@ -29,7 +29,8 @@
                  [org.clojure/java.jdbc "0.3.3"]
                  [org.flywaydb/flyway-core "3.0"]
                  [criterium "0.4.3"]
-                 [org.clojars.frozenlock/reagent-modals "0.2.2"]]
+                 [org.clojars.frozenlock/reagent-modals "0.2.2"]
+                 [re-frame "0.2.0"]]
 
   :plugins [
             [lein-cljsbuild "1.0.4"]
