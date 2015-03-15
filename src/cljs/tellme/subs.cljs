@@ -5,4 +5,14 @@
 (register-sub
   :in-progress
   (fn [db _]
-    (reaction (vals (:in-progress @db)))))
+    (reaction (:in-progress @db))))
+
+(register-sub
+  :user
+  (fn [db _]
+    (reaction (:user @db))))
+
+(register-sub
+  :active-panel
+  (fn [db _]
+    (reaction (:active-panel @db))))

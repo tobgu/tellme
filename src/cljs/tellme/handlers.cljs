@@ -32,9 +32,24 @@
 (register-handler
  :login
  [trim-v]
- (fn  [db [user pass]]
+ (fn [db [user pass]]
    (ajx/POST "/login" {:params {:user user :pass pass}
                        :handler #(dispatch [:login-success %])
                        :error-handler #(dispatch [:login-failure %])})
    (assoc db :in-progress? true :error? false)))
 
+(register-handler
+ :active-panel
+ [trim-v]
+ (fn [db [panel]]
+   (assoc db :active-panel panel)))
+
+
+(register-handler
+ :logout
+ user-ware
+ (fn [db _]
+   (ajx/POST "/logout" {:headers {"Authorization" (str "Token " (get-in db [:user :token]))}
+                        :handler #(.warn js/console (str "Logout success"))
+                        :error-handler #(.warn js/console (str "Logout error, response: " %))})
+   (assoc db :user {})))
