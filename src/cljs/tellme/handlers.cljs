@@ -42,7 +42,7 @@
  :active-panel
  [trim-v]
  (fn [db [panel]]
-   (assoc db :active-panel panel)))
+   (assoc db :active-panel (keyword panel))))
 
 
 (register-handler

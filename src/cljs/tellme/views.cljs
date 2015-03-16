@@ -1,6 +1,7 @@
 (ns tellme.views
   (:require [re-frame.core :refer [subscribe dispatch]]
-            [reagent-modals.modals :as reagent-modals]))
+            [reagent-modals.modals :as reagent-modals]
+            [tellme.routes :as routes]))
 
 (defn input-value [input]
   (-> input .-target .-value))
@@ -20,15 +21,6 @@
             [:input {:on-change (set-value! pass) :type "password" :placeholder "Password"}]
             [:span.button.login-button {:on-click #(dispatch [:login @user @pass])} "Login"]])))
 
-(defn sidebar []
-  [:div#sidebar-wrapper
-   [:ul.sidebar-nav
-    [:li.sidebar-brand [:a {:href "#"} "User Foo"]]
-    [:li [:a {:href "#/report"} "Reports"]]
-    [:li [:a {:href "#/stat"} "Statistics"]]
-    [:li [:a {:href "#/admin"} "Admin"]]
-    ]])
-
 
 (defn start-page []
   [:div.container
@@ -47,23 +39,52 @@
     (.call (aget m "modal") m "hide")
     m))
 
-(defn logged-in-page []
+(defn report-panel []
+  [:span "Do some reports!"])
+
+(defn analyze-panel []
+  [:span "Analyze this!"])
+
+; Potentially separate into report and user administration
+(defn admin-panel []
+  [:span "Administrate!"])
+
+(def panels (sorted-map :admin   {:label "Admin"   :panel admin-panel}
+                        :analyze {:label "Analyze" :panel analyze-panel}
+                        :report  {:label "Report"  :panel report-panel}))
+
+(defn panel-for-user [panel user]
+  ; TODO Make the start panel user dependent
+  (case panel
+        :start :report
+        panel))
+
+
+(defn sidebar [user active-panel]
+  [:div#sidebar-wrapper
+   (into [:ul.sidebar-nav]
+         (concat
+          [[:li.sidebar-brand [:a {:href "#"} (:user user)]]]
+          (for [[k p] (seq panels)]
+            [:li [:a {:href (routes/panel-route {:panel (name k)})} (:label p)]])
+          [[:div.btn.btn-xs.btn-default.logout-button {:on-click #(dispatch [:logout])} "Logout"]]
+          ))
+   ])
+
+(defn logged-in-page [user active-panel]
   (hide-modal!)
   [:div#wrapper
-   (sidebar)
-   [:div.login-form
-    [:span (str "Logged in")]
-    [:span.button.login-button.out {:on-click #(dispatch [:logout])} "Logout"]]])
-
+   (sidebar user active-panel)
+   (if active-panel  ; Initially the panel may be empty so we need to guard against that case
+     [(get-in panels [(panel-for-user active-panel user) :panel])])])
 
 (defn tellme-app []
   (let [active-panel (subscribe [:active-panel])
         user (subscribe [:user])]
     (fn []
-      (.warn js/console (str "Rendering app for user " @user ", active panel " @active-panel))
       [:div
        (if (empty? @user)
          [start-page]
-         [logged-in-page])])))
+         (logged-in-page @user @active-panel))])))
 
 ; reaction vs subscribe vs subscription???

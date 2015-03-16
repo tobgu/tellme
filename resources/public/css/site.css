@@ -57,10 +57,15 @@ div > .btn {
 }
 
 .login-button {
-  font-size: 120%;
+  font-size: 130%;
   padding:7px;
-  margin-left: 10px;
-  madgin-top: -4px;
+  margin-left: 20px;
+  madgin-top: 0px;
+}
+
+.logout-button {
+  margin-left: 80px;
+  margin-top: 30px;
 }
 
 input {
