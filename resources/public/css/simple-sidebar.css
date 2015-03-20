@@ -59,6 +59,20 @@
     list-style: none;
 }
 
+.sidebar-nav div.circle {
+    width:100px;
+    height:100px;
+    border-radius:50px;
+    font-size:45px;
+    color:#000;
+    text-indent: 0px;
+    line-height:100px;
+    text-align:center;
+    background:#FFF;
+    margin-left: 75px;
+    margin-top: 10px;
+}
+
 .sidebar-nav li {
     text-indent: 20px;
     line-height: 40px;
@@ -74,6 +88,12 @@
     text-decoration: none;
     color: #fff;
     background: rgba(255,255,255,0.2);
+}
+
+.sidebar-nav li a.active {
+    text-decoration: none;
+    color: #000;
+    background: #FFFFFF;
 }
 
 .sidebar-nav li a:active,
