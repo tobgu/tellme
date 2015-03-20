@@ -12,14 +12,16 @@
 (defn login-form []
   (let [user (atom nil)
         pass (atom nil)
-;        error (atom nil)
-;        result (subscribe [:login-result])
+        error? (subscribe [:error?])
         in-progress (subscribe [:in-progress])]
       (fn []
-        [:div.login-form
-            [:input {:on-change (set-value! user) :type "text" :placeholder "Username"}]
-            [:input {:on-change (set-value! pass) :type "password" :placeholder "Password"}]
-            [:span.button.login-button {:on-click #(dispatch [:login @user @pass])} "Login"]])))
+        [:div
+        (if @error?
+          [:div (str "Invalid credentials, please try again")])
+          [:div.login-form
+              [:input {:on-change (set-value! user) :type "text" :placeholder "Username"}]
+              [:input {:on-change (set-value! pass) :type "password" :placeholder "Password"}]
+              [:span.button.login-button {:on-click #(dispatch [:login @user @pass])} "Login"]]])))
 
 
 (defn start-page []
@@ -64,19 +66,23 @@
   [:div#sidebar-wrapper
    (into [:ul.sidebar-nav]
          (concat
-          [[:li.sidebar-brand [:a {:href "#"} (:user user)]]]
+          [
+           [:li.sidebar-logo [:a {:href "#"} [:div.circle "TM"]]]
+           [:li.sidebar-brand [:a {:href "#"} (:user user)]]
+           ]
           (for [[k p] (seq panels)]
-            [:li [:a {:href (routes/panel-route {:panel (name k)})} (:label p)]])
+            [:li [:a {:class (if (= k active-panel) "active" "inactive") :href (routes/panel-route {:panel (name k)})} (:label p)]])
           [[:div.btn.btn-xs.btn-default.logout-button {:on-click #(dispatch [:logout])} "Logout"]]
           ))
    ])
 
 (defn logged-in-page [user active-panel]
   (hide-modal!)
-  [:div#wrapper
-   (sidebar user active-panel)
-   (if active-panel  ; Initially the panel may be empty so we need to guard against that case
-     [(get-in panels [(panel-for-user active-panel user) :panel])])])
+  (let [panel (panel-for-user active-panel user)]
+    [:div#wrapper
+     (sidebar user panel)
+     (if active-panel  ; Initially the panel may be empty so we need to guard against that case
+       [(get-in panels [panel :panel])])]))
 
 (defn tellme-app []
   (let [active-panel (subscribe [:active-panel])

@@ -39,7 +39,7 @@
       (if (= found-password pass)
         (let [nexturl (get-in request [:query-params :next] "/")
               session (assoc session :identity (keyword user))]
-          {:status 201 :session session :body {:user user :roles (get roles (keyword user)) :token :2f904e245c1f5}})
+          {:status 201 :session session :body {:user user :roles (get roles (keyword user)) :token "2f904e245c1f5"}})
         {:status 401 :body {:user user :pass pass}})
       {:status 401 :body {:user user :pass pass}})))
 
@@ -84,8 +84,8 @@
 ;;                           :last_name "G"}})
 
 ;; Define a in-memory relation between tokens and users:
-(def tokens {:2f904e245c1f5 :a
-             :45c1f5e3f05d0 :b})
+(def tokens {"2f904e245c1f5" :a
+             "45c1f5e3f05d0" :b})
 
 ;; Define a authfn, function with the responsibility
 ;; to authenticate the incoming token and return an
@@ -93,10 +93,9 @@
 
 (defn my-authfn
   [request token]
-  (let [token (keyword token)]
-    (get tokens token nil)))
+    (get tokens token nil))
 
-;; Create a instance
+;; Create an instance
 (def backend (token-backend {:authfn my-authfn}))
 
 
