@@ -36,78 +36,32 @@ div > .btn {
   margin: 5px 5px 5px 5px;
 }
 
-.login-form {
-  margin: 10px 10px 10px 10px;
-  text-align:left;
-  width: 600px;
-  float: left;
-  padding-bottom: 10px;
-  color: #222;
-  -webkit-border-radius: 4px;
-  -moz-border-radius: 4px;
-  background-color: #f9f9f9;
-  border: 1px solid #e5e5e5;
-  border-radius: 4px;
-
-  padding: 20px;
-}
-
-.login-form {
-  text-align: center;
-}
-
-.login-button {
-  font-size: 130%;
-  padding:7px;
-  margin-left: 20px;
-  madgin-top: 0px;
-}
-
 .logout-button {
   margin-left: 100px;
   margin-top: 30px;
 }
 
-input {
-    width: 100px;
-    min-height: 20px;
-    color: #555;
-    font-size: 15px;
-    border: none;
-    margin-left: 10px;
-    margin-bottom: 10px;
-    background-color: #eee;
-    border:1px solid;
-    border-color:#ccc;
-    -moz-border-radius: 3px;
-    -webkit-border-radius: 3px;
-    border-radius: 3px;
+.tellme-modal {
+  padding: 10px;
 }
 
-.button {
-    font-size: 11pt;
-    background-color: #999;
-    padding: 3px;
-    margin-right: 2px;
-    color: #fff;
-    cursor:pointer;
-
-    border:1px solid;
-    border-color:#eee;
-    -moz-border-radius: 4px;
-    -webkit-border-radius: 4px;
-    -moz-box-shadow:    inset 0 0 4px #999;
-    -webkit-box-shadow: inset 0 0 4px #999;
-    box-shadow:         inset 0 0 4px #999;
-    border-radius: 4px;
+.tellme-input {
+  margin-top: 5px;
+  margin-bottom: 5px;
+  padding-left: 2px;
+  width: 300px;
+  min-height: 20px;
+  color: #555;
+  font-size: 15px;
+  border: none;
+  background-color: #eee;
+  border:1px solid;
+  border-color:#ccc;
+  -moz-border-radius: 3px;
+  -webkit-border-radius: 3px;
+  border-radius: 3px;
 }
 
-.button:hover {
-  background-color: #666;
-}
-
-form span {
-    border: 1px solid #AAA;
-    padding: 1px;
-    cursor:pointer;
+.error-feedback {
+  background-color: #E34034
 }
