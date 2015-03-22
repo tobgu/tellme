@@ -13,8 +13,8 @@
 ; TODO: The notion of an error? true/false is probably to weak. Some more information should
 ;       be possible to supply.
 (defn login-form []
-  (let [user (atom nil)
-        pass (atom nil)
+  (let [user (reagent/atom nil)
+        pass (reagent/atom nil)
         error? (subscribe [:error?])
         in-progress (subscribe [:in-progress])]
       (fn []
@@ -27,34 +27,33 @@
            [:input.tellme-input {:on-change (set-value! user) :type "text" :placeholder "Username"}]]
           [:div.formgroup
            [:input.tellme-input {:on-change (set-value! pass) :type "password" :placeholder "Password"}]]
-          [:div.btn.btn-lg.btn-primary {:on-click #(dispatch [:login @user @pass])} "Login"]]])))
+          [:div.btn.btn-lg.btn-primary (if (and (> (count @user) 0) (> (count @pass) 0))
+                                         {:disabled false :on-click #(dispatch [:login @user @pass])}
+                                         {:disabled true})"Login"]]])))
 
 
-;; (defn input-valid?
-;;   "Valid if input is less than 10 characters"
-;;   [x]
-;;   (> 10 (count x)))
+(defn validate-non-empty [state validation field-name]
+  (if (= (count (field-name @state)) 0)
+    (swap! validation assoc field-name "Mandatory")
+    (swap! validation assoc field-name "")))
 
-;; (defn color [input]
-;;   (let [valid-color "green"
-;;         invalid-color "red"]
-;;     (if (input-valid? input)
-;;       valid-color invalid-color)))
+(defn field
+  ([state validation field-name placeholder]
+   (field state validation field-name placeholder "text"))
+  ([state validation field-name placeholder input-type]
+   (validate-non-empty state validation field-name)
+   [:span
+    [:input.tellme-input
+     {:on-change #(swap! state assoc field-name (-> % .-target .-value))
+      :type input-type
+      :placeholder placeholder}]
+    [:span.validation-feedback (field-name @validation)]]))
 
-;; (defn home []
-;;   (let [state (reagent/atom {:user-input "some value"})]
-;;     (fn []
-;;       [:div [:h1 "Welcome to Reagent Cookbook!"]
-;;        [:span {:style {:padding "20px"
-;;                        :background-color (color (@state :user-input))}}
-;;         [:input {:value (@state :user-input)
-;;                  :on-change #(swap! state assoc :user-input (-> % .-target .-value))
-;;                  }]]])))
-
-
+;; TODO Stricter validaion of e-mail and some sort of strength indicator on password
 (defn sign-up-form []
   (let [account-info (reagent/atom {:user "", :password "", :first-name "", :last-name "", :e-mail ""
                                     :org-name "", :org-short-name ""})
+        validation-info (reagent/atom @account-info)
         error? (subscribe [:error?])
         in-progress (subscribe [:in-progress])]
       (fn []
@@ -65,22 +64,17 @@
          [:form.sign-up-form
           [:div.formgroup
            [:span (str (:org-short-name @account-info) "_")]
-           [:input.tellme-input {:on-change #(swap! account-info assoc :user (-> % .-target .-value)) :type "text" :placeholder "Username"}]]
-          [:div.formgroup
-           [:input.tellme-input {:on-change #(swap! account-info assoc :password (-> % .-target .-value)) :type "password" :placeholder "Password"}]]
-          [:div.formgroup
-           [:input.tellme-input {:on-change #(swap! account-info assoc :first-name (-> % .-target .-value)) :type "text" :placeholder "First name"}]]
-          [:div.formgroup
-           [:input.tellme-input {:on-change #(swap! account-info assoc :last-name (-> % .-target .-value)) :type "text" :placeholder "Last name"}]]
-          [:div.formgroup
-           [:input.tellme-input {:on-change #(swap! account-info assoc :e-mail (-> % .-target .-value)) :type "email" :placeholder "E-mail"}]]
-          [:div.formgroup
-           [:input.tellme-input {:on-change #(swap! account-info assoc :org-name (-> % .-target .-value)) :type "text" :placeholder "Organization name"}]]
-          [:div.formgroup
-           [:input.tellme-input {:on-change #(swap! account-info assoc :org-short-name (-> % .-target .-value)) :type "text" :placeholder "Organization short name"}]]
+           (field account-info, validation-info, :user "Username")]
+          [:div.formgroup (field account-info, validation-info, :password "Password" "password")]
+          [:div.formgroup (field account-info, validation-info, :first-name "First name")]
+          [:div.formgroup (field account-info, validation-info, :last-name "Last name")]
+          [:div.formgroup (field account-info, validation-info, :e-mail "E-mail" "e-mail")]
+          [:div.formgroup (field account-info, validation-info, :org-name "Organization name")]
+          [:div.formgroup (field account-info, validation-info, :org-short-name "Organization short name")]
           [:div.btn.btn-lg.btn-primary
-           {:on-click #(dispatch [:sign-up @account-info])} "Sign up"]]]))
-  )
+           (if (every? empty? (vals @validation-info))
+             {:disabled false :on-click #(dispatch [:sign-up @account-info])}
+             {:disabled true}) "Sign up"]]])))
 
 (defn start-page []
   [:div.container
